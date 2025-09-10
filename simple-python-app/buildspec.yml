@@ -5,7 +5,7 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws --version
-      - $(aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin <account-id>.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com)
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin <account-id>.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - REPOSITORY_URI=<account-id>.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/my-docker-app
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
   build:
