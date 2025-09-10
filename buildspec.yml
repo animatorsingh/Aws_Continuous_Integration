@@ -1,31 +1,33 @@
 version: 0.2
 
 env:
-  parameter-store:
-    DOCKER_REGISTRY_USERNAME: /myapp/docker-credentials/username
-    DOCKER_REGISTRY_PASSWORD: /myapp/docker-credentials/password
-    DOCKER_REGISTRY_URL: /myapp/docker-registry/url
+  variables:
+    AWS_ACCOUNT_ID: "155343615310"
+    AWS_REGION: "ap-south-1"
+    REPOSITORY_NAME: "my-python-app"
+
 phases:
-  install:
-    runtime-versions:
-      python: 3.11
   pre_build:
     commands:
-      - echo "Installing dependencies..."
-      - pip install -r day-13/simple-python-app/requirements.txt
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - ECR_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME
+      - echo $ECR_URI
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URI
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
   build:
     commands:
-      - echo "Running tests..."
-      - cd day-13/simple-python-app/
-      - echo "Building Docker image..."
-      - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY_URL"
-      - docker build -t "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/simple-python-flask-app:latest" .
-      - docker push "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/simple-python-flask-app:latest"
+      - echo Building the Docker image...
+      - docker build -t $ECR_URI:latest .
+      - docker tag $ECR_URI:latest $ECR_URI:$IMAGE_TAG
   post_build:
     commands:
-      - echo "Build completed successfully!"
+      - echo Pushing the Docker images to ECR...
+      - docker push $ECR_URI:latest
+      - docker push $ECR_URI:$IMAGE_TAG
+      - echo Writing imagedefinitions.json file...
+      - printf '[{"name":"my-python-app","imageUri":"%s"}]' $ECR_URI:$IMAGE_TAG > imagedefinitions.json
+
 artifacts:
   files:
-    - '**/*'
-  base-directory: ../simple-python-app
-
+    - imagedefinitions.json
