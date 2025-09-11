@@ -2,6 +2,7 @@
 ECR_URI=155343615310.dkr.ecr.ap-south-1.amazonaws.com/my-python-app:latest
 
 # Stop old container
+docker stop myapp || true
 docker rm -f myapp || true
 
 # Pull latest image
