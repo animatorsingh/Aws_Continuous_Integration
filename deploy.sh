@@ -9,4 +9,4 @@ aws ecr get-login-password --region ap-south-1 | docker login --username AWS --p
 docker pull $ECR_URI
 
 # Run new container
-docker run -d --name myapp -p 80:5000 $ECR_URI
+docker run -d --name myapp -p 5000:5000 $ECR_URI
